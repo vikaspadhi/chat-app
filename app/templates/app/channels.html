@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css"
+    />
+  </head>
+  <body>
+    <div class="container my-5 py-5 shadow">
+     <h1 class="text-center">
+      Channel Name: {{gropuname}}
+      
+      <!-- for using groupname in javascript -->
+      {{gropuname | json_script:"groupname"}}
+
+     </h1> 
+      <div
+        class="border border-2 border-warning w-75 mx-auto p-3"
+        id="chat-log"
+        style="height: 500px; overflow-y: scroll"
+      >
+
+      {% for data in chat_msgs %}
+        <p class="border border-2 p-2 my-2 rounded">{{data.msg}}</p>
+      {% endfor %}
+
+
+    </div>
+
+      <div class="w-75 mx-auto my-2">
+        <input
+          type="text"
+          name=""
+          id="msg"
+          class="form-control border border-primary"
+        />
+        <input
+          type="button"
+          value="Send"
+          class="btn btn-primary my-2"
+          id="send_btn"
+          onclick="send_msg()"
+        />
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+
+      let groupname = JSON.parse(document.getElementById("groupname").textContent)
+      console.log(groupname)
+
+      var ws = new WebSocket(`ws://${window.location.host}/ws/sc/${groupname}/`);
+
+      ws.onopen = (event) => {
+        console.log("Websocket connected...");
+      };
+
+      ws.onclose = (event) => {
+        console.log("websocket disconnected...");
+      };
+
+      ws.onmessage = (event) => {
+        let e = event;
+        let chat_log = document.getElementById("chat-log");
+        let data = JSON.parse(e.data);
+        chat_log.innerHTML += `<p class="border border-2 p-2 my-2 rounded">${data.msg}</p>`;
+
+        chat_log.scrollTop = chat_log.scrollHeight;
+      };
+
+      ws.onerror = (event) => {
+        console.log("Websocket error...", event);
+      };
+
+      let send_msg = () => {
+        let input = document.getElementById("msg");
+        let msg = input.value;
+        let data = { msg: msg };
+        ws.send(JSON.stringify(data));
+        input.value = "";
+      };
+
+      let msg_input = document.getElementById("msg");
+      msg_input.addEventListener("keydown", (e) => {
+        if(e.keyCode == 13)
+        {
+            send_msg()
+        }
+      });
+
+      
+
+
+
+    </script>
+  </body>
+</html>
